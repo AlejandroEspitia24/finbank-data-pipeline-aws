@@ -1,0 +1,14 @@
+# Versiones mínimas en vez de pines exactos: este entorno corre Python 3.14
+# (muy reciente), y pines exactos antiguos (ej. pandas==2.2.2) no tienen
+# wheel precompilado para esa versión de Python, lo que fuerza a pip a
+# compilar desde código fuente y falla por incompatibilidad de Cython con
+# el compilador del sistema. Con mínimos, pip resuelve la versión más
+# reciente compatible que sí tenga wheel.
+pandas>=2.2.2
+numpy>=1.26.4
+faker>=25.2.0
+pyyaml>=6.0.1
+pyarrow>=16.1.0
+sqlalchemy>=2.0.30
+psycopg2-binary>=2.9.9
+python-dotenv>=1.0.1

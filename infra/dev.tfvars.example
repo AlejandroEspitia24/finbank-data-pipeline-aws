@@ -1,0 +1,9 @@
+# Copiar a dev.tfvars (gitignorado) y completar con tus valores.
+environment     = "dev"
+aws_region      = "us-east-1"
+aws_profile     = "prueba-tecnica-finbank"
+alert_email     = "tu-correo@ejemplo.com"
+
+# Obtener con: curl -s https://checkip.amazonaws.com
+# Formato CIDR con /32 (una sola IP). Nunca usar 0.0.0.0/0.
+allowed_ip_cidr = "203.0.113.10/32"

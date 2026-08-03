@@ -1,0 +1,31 @@
+# Secretos y credenciales
+.env
+*.pem
+*.key
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+backend.hcl
+!backend.hcl.example
+crash.log
+override.tf
+override.tf.json
+
+# Datos generados (grandes, no se versionan; se regeneran con generate_data.py)
+data-generation/output/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Sistema
+.DS_Store
+
+# Material de estudio personal — NO debe quedar como evidencia en el repositorio entregado
+docs/GUIA_ESTUDIO.md

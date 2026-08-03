@@ -1,0 +1,8 @@
+# Copiar a backend.hcl (gitignorado) y completar con los outputs reales de
+# "terraform apply" dentro de infra/bootstrap/.
+bucket         = "finbank-tfstate-<account_id>"
+key            = "finbank/terraform.tfstate"
+region         = "us-east-1"
+dynamodb_table = "finbank-tfstate-lock"
+encrypt        = true
+profile        = "prueba-tecnica-finbank"

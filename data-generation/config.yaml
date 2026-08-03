@@ -1,0 +1,30 @@
+# Configuración centralizada de la generación de datos sintéticos de FinBank.
+# Cambiar estos valores no requiere tocar el código de generate_data.py.
+
+seed: 42
+
+# Fecha de referencia = "hoy" dentro de la simulación. Los 12 meses de histórico
+# que exige el enunciado se calculan hacia atrás desde esta fecha.
+reference_date: "2026-08-02"
+history_months: 12
+
+volumes:
+  clientes: 10000
+  productos: 50
+  sucursales: 200
+  movimientos: 500000
+  obligaciones: 30000
+  comisiones: 80000
+
+# Porcentaje de nulos a inyectar en columnas no críticas (no PK/FK), simulando
+# calidad de datos real de un sistema legado.
+null_rate: 0.05
+
+anomalies:
+  duplicate_movimientos_rate: 0.003   # ~0.3% de TB_MOV_FINANCIEROS duplicados
+  out_of_range_dates_rate: 0.002      # ~0.2% de fechas de movimiento inválidas
+  inconsistent_obligaciones_rate: 0.01 # ~1% de obligaciones con vr_desembolsado > vr_aprobado
+
+output:
+  formats: ["csv", "parquet"]
+  dir: "output"
