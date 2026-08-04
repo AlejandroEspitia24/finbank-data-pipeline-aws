@@ -18,6 +18,9 @@ override.tf.json
 # Datos generados (grandes, no se versionan; se regeneran con generate_data.py)
 data-generation/output/
 
+# Artefacto de build del Lambda (se regenera con terraform apply)
+orchestration/lambda/*.zip
+
 # Python
 __pycache__/
 *.pyc

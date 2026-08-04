@@ -78,9 +78,19 @@ def build_dim_geografia(silver):
 
 
 def build_dim_canal(silver):
+    """Corrección de un hallazgo de auditoría: tip_punto solo toma los
+    valores SUCURSAL/CORRESPONSAL/CAJERO (ver data-generation/generate_data.py,
+    gen_sucursales) — los tres son puntos de atención físicos. Los canales
+    verdaderamente digitales (APP, WEB) no son "puntos" en TB_SUCURSALES_RED:
+    se registran como valor de cod_canal directamente en TB_MOV_FINANCIEROS
+    (ver fact_transacciones.cod_canal). Marcar CORRESPONSAL como "canal
+    digital" era un error de interpretación — un corresponsal bancario es
+    un punto de atención físico asistido (una tienda con datáfono), no un
+    canal digital. Por eso es_canal_digital es False para las tres, con esta
+    razón documentada explícitamente en vez de dejar un flag engañoso."""
     df = silver["tb_sucursales_red"]
     return (
-        df.withColumn("es_canal_digital", F.col("tip_punto") == "CORRESPONSAL")
+        df.withColumn("es_canal_digital", F.lit(False))
           .select("cod_suc", "tip_punto", "es_canal_digital", "activo")
     )
 

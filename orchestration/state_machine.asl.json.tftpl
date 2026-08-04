@@ -1,0 +1,172 @@
+{
+  "Comment": "Pipeline Medallion FinBank: Bronze -> validacion de volumen -> Silver -> Gold -> resumen, con reintentos con backoff exponencial y alertas SNS de fallo/exito con detalle.",
+  "StartAt": "IngestaBronze",
+  "States": {
+    "IngestaBronze": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Parameters": {
+        "JobName": "${bronze_job_name}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "IntervalSeconds": 30,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "MarcarFalloBronze"
+        }
+      ],
+      "ResultPath": null,
+      "Next": "ValidarVolumen"
+    },
+    "ValidarVolumen": {
+      "Type": "Task",
+      "Resource": "${volume_lambda_arn}",
+      "ResultPath": "$.volume_check",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "LimpiezaSilver"
+        }
+      ],
+      "Next": "LimpiezaSilver"
+    },
+    "LimpiezaSilver": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Parameters": {
+        "JobName": "${silver_job_name}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "IntervalSeconds": 30,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "MarcarFalloSilver"
+        }
+      ],
+      "ResultPath": null,
+      "Next": "TransformacionGold"
+    },
+    "TransformacionGold": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Parameters": {
+        "JobName": "${gold_job_name}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "IntervalSeconds": 30,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "MarcarFalloGold"
+        }
+      ],
+      "ResultPath": null,
+      "Next": "PrepararResumenExito"
+    },
+    "PrepararResumenExito": {
+      "Type": "Task",
+      "Resource": "${summary_lambda_arn}",
+      "Parameters": {
+        "execution_start_time.$": "$$.Execution.StartTime"
+      },
+      "ResultPath": "$.summary",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.summary_error",
+          "Next": "ResumenNoDisponible"
+        }
+      ],
+      "Next": "NotificarExito"
+    },
+    "ResumenNoDisponible": {
+      "Type": "Pass",
+      "Parameters": {
+        "bronze_records": "N/D",
+        "silver_records": "N/D",
+        "gold_records": "N/D",
+        "quality_rejected_records": "N/D",
+        "dq_checks_failed": "N/D",
+        "execution_duration_seconds": "N/D"
+      },
+      "ResultPath": "$.summary",
+      "Next": "NotificarExito"
+    },
+    "NotificarExito": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${sns_topic_arn}",
+        "Subject": "FinBank Pipeline - Resumen diario de ejecucion exitosa",
+        "Message.$": "States.Format('Pipeline Medallion FinBank ({}) ejecutado exitosamente.\nEjecucion: {}\nRegistros procesados - Bronze: {}, Silver: {}, Gold: {}\nRegistros rechazados por calidad (Silver, hoy): {}\nChequeos de calidad fallidos: {}\nTiempo total de ejecucion: {} segundos', $$.StateMachine.Name, $$.Execution.Name, $.summary.bronze_records, $.summary.silver_records, $.summary.gold_records, $.summary.quality_rejected_records, $.summary.dq_checks_failed, $.summary.execution_duration_seconds)"
+      },
+      "End": true
+    },
+    "MarcarFalloBronze": {
+      "Type": "Pass",
+      "Parameters": {
+        "error.$": "$.error",
+        "failed_task": "IngestaBronze",
+        "failed_layer": "Bronze"
+      },
+      "Next": "NotificarFallo"
+    },
+    "MarcarFalloSilver": {
+      "Type": "Pass",
+      "Parameters": {
+        "error.$": "$.error",
+        "failed_task": "LimpiezaSilver",
+        "failed_layer": "Silver"
+      },
+      "Next": "NotificarFallo"
+    },
+    "MarcarFalloGold": {
+      "Type": "Pass",
+      "Parameters": {
+        "error.$": "$.error",
+        "failed_task": "TransformacionGold",
+        "failed_layer": "Gold"
+      },
+      "Next": "NotificarFallo"
+    },
+    "NotificarFallo": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${sns_topic_arn}",
+        "Subject.$": "States.Format('FinBank Pipeline - FALLO en tarea {}', $.failed_task)",
+        "Message.$": "States.Format('Fallo el pipeline Medallion FinBank.\nDAG (state machine): {}\nEjecucion: {}\nTarea que fallo: {}\nCapa afectada: {}\nHora del fallo (UTC): {}\nError: {}\nCausa: {}', $$.StateMachine.Name, $$.Execution.Name, $.failed_task, $.failed_layer, $$.State.EnteredTime, $.error.Error, $.error.Cause)"
+      },
+      "Next": "FalloPipeline"
+    },
+    "FalloPipeline": {
+      "Type": "Fail",
+      "Error": "PipelineFailed",
+      "Cause": "Uno de los Glue Jobs del pipeline Medallion fallo tras 3 reintentos con backoff exponencial."
+    }
+  }
+}

@@ -89,3 +89,25 @@ RDS origen hasta las tablas Gold finales. Pendiente: orquestación formal
 (Fase 4) para automatizar esta secuencia con dependencias, reintentos y
 alertas — hasta ahora se disparó cada job manualmente vía `aws glue
 start-job-run`.
+
+## Corrección post-auditoría: `dim_canal.es_canal_digital` estaba mal calculado
+
+Una auditoría posterior contra `data-generation/generate_data.py` encontró
+que `tip_punto` en `tb_sucursales_red` solo toma los valores `SUCURSAL`,
+`CORRESPONSAL` y `CAJERO` — los tres son puntos de atención **físicos**.
+La versión original de `build_dim_canal` marcaba `CORRESPONSAL` como
+`es_canal_digital = True`, lo cual es incorrecto: un corresponsal bancario
+es un punto físico asistido (una tienda con datáfono), no un canal
+digital. Los canales realmente digitales de FinBank (`APP`, `WEB`) no son
+filas de esta tabla — viven como valor de `cod_canal` en
+`fact_transacciones`. Se corrigió a `es_canal_digital = False` para las
+tres categorías, verificado contra los datos reales tras el re-despliegue:
+
+```
+tip_punto     es_canal_digital
+CAJERO        [False]
+CORRESPONSAL  [False]
+SUCURSAL      [False]
+```
+
+Ver el razonamiento completo documentado en `pipelines/gold/README.md`.

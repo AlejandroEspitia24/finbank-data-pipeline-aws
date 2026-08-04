@@ -47,6 +47,26 @@ terraform apply -var-file=dev.tfvars
 AWS envía un correo a `alert_email` con un enlace de confirmación. **Las alertas no
 funcionan hasta hacer clic en ese enlace.**
 
+## Segundo entorno (prod)
+
+El enunciado exige soporte a al menos 2 entornos mediante archivos de
+variables separados. Ningún archivo `.tf` cambia entre entornos — todo el
+nombrado de recursos deriva de `var.environment` (validado a `dev`/`prod`
+en `variables.tf`), así que desplegar `prod` crea un set de recursos
+completamente separado y nombrado distinto (ej.
+`finbank-prod-bronze-...` en vez de `finbank-dev-bronze-...`):
+
+```bash
+cp prod.tfvars.example prod.tfvars
+# Editar prod.tfvars con los valores reales
+
+# Usar una clave de estado distinta en el backend para no compartir el
+# mismo terraform.tfstate remoto que dev:
+terraform init -reconfigure -backend-config=backend.hcl -backend-config="key=finbank/prod/terraform.tfstate"
+terraform plan -var-file=prod.tfvars
+terraform apply -var-file=prod.tfvars
+```
+
 ## Paso 6 — Cargar los datos generados en la Fase 1
 
 Con `rds_endpoint` del output de Terraform, completa `data-generation/.env`

@@ -46,6 +46,19 @@ Se usan valores inspirados en la normativa colombiana de provisión de
 cartera de consumo (1% / 5% / 20% / 50% / 100% por bucket), documentados
 como supuesto y fácilmente ajustables (`PROVISION_PCT` en el código).
 
+**`dim_canal.es_canal_digital` es `False` para todos los registros — no es un
+error.** `TB_SUCURSALES_RED.tip_punto` solo toma los valores `SUCURSAL`,
+`CORRESPONSAL` y `CAJERO` (ver `data-generation/generate_data.py`,
+`gen_sucursales`) — los tres son puntos de atención **físicos**. Los
+canales verdaderamente digitales de FinBank (`APP`, `WEB`) no aparecen
+como filas de esta tabla: se registran directamente como valor de
+`cod_canal` en `TB_MOV_FINANCIEROS` (propagado a `fact_transacciones`). Una
+versión anterior de este campo marcaba `CORRESPONSAL` como "digital" por
+error — un corresponsal bancario es un punto físico asistido (una tienda
+con datáfono), no un canal digital. Se corrigió a `False` para las tres
+categorías, documentando la razón en vez de dejar un flag que sugiere algo
+que los datos no respaldan.
+
 ## Particionamiento (optimización de consultas, exigido por el enunciado)
 
 - `fact_transacciones`: particionada por `anio`/`mes` (fecha de negocio) — es

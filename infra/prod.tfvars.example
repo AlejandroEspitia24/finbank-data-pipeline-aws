@@ -1,0 +1,27 @@
+# Copiar a prod.tfvars (gitignorado) y completar con tus valores.
+#
+# Demuestra el soporte a un segundo entorno exigido por el enunciado
+# ("la configuración debe soportar al menos dos entornos distintos
+# mediante workspaces o archivos de variables separados: por ejemplo,
+# dev y prod"). Ningún archivo .tf cambia entre entornos — todo el
+# nombrado de recursos deriva de var.environment (validado a dev/prod en
+# variables.tf), así que "prod" crea un set de recursos completamente
+# separado y nombrado de forma distinta (ej. finbank-prod-bronze-... en
+# vez de finbank-dev-bronze-...), sin colisionar con dev.
+#
+# Para desplegar prod: usar un backend.hcl con un "key" de estado
+# distinto (ej. "prod/terraform.tfstate") para no compartir el mismo
+# archivo de estado remoto que dev.
+environment     = "prod"
+aws_region      = "us-east-1"
+aws_profile     = "prueba-tecnica-finbank"
+alert_email     = "tu-correo@ejemplo.com"
+
+# Recursos más grandes que dev, acorde a un entorno con carga real
+# (sigue dentro de límites razonables de capa gratuita/bajo costo).
+db_instance_class      = "db.t3.small"
+glue_number_of_workers = 3
+
+# Obtener con: curl -s https://checkip.amazonaws.com
+# Formato CIDR con /32 (una sola IP). Nunca usar 0.0.0.0/0.
+allowed_ip_cidr = "203.0.113.10/32"

@@ -83,3 +83,21 @@ variable "log_retention_days" {
   type        = number
   default     = 14
 }
+
+variable "pipeline_schedule_expression" {
+  description = "Expresión cron de EventBridge Scheduler para la ejecución diaria del pipeline. 02:00 evita horario laboral y coincide con baja carga en RDS."
+  type        = string
+  default     = "cron(0 2 * * ? *)"
+}
+
+variable "pipeline_schedule_timezone" {
+  description = "Zona horaria para interpretar pipeline_schedule_expression."
+  type        = string
+  default     = "America/Bogota"
+}
+
+variable "volume_anomaly_threshold_pct" {
+  description = "Porcentaje de desviación del volumen de ingesta Bronze (vs. promedio de los últimos 7 días) a partir del cual se dispara una alerta SNS."
+  type        = number
+  default     = 30
+}

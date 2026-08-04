@@ -119,6 +119,12 @@ data "aws_iam_policy_document" "step_functions_custom" {
   }
 
   statement {
+    sid       = "InvokeOrchestrationLambdas"
+    actions   = ["lambda:InvokeFunction"]
+    resources = [aws_lambda_function.check_volume_anomaly.arn, aws_lambda_function.build_execution_summary.arn]
+  }
+
+  statement {
     sid = "StepFunctionsLogging"
     actions = [
       "logs:CreateLogDelivery",
