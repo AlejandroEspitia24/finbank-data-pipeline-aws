@@ -96,6 +96,12 @@ variable "pipeline_schedule_timezone" {
   default     = "America/Bogota"
 }
 
+variable "pipeline_schedule_enabled" {
+  description = "Si es false, el schedule diario queda deshabilitado (pausado) sin eliminar ningún recurso — útil para detener ejecuciones automáticas mientras no se necesitan, sin perder la infraestructura desplegada."
+  type        = bool
+  default     = true
+}
+
 variable "volume_anomaly_threshold_pct" {
   description = "Porcentaje de desviación del volumen de ingesta Bronze (vs. promedio de los últimos 7 días) a partir del cual se dispara una alerta SNS."
   type        = number

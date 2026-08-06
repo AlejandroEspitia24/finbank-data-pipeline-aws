@@ -207,6 +207,14 @@ resource "aws_scheduler_schedule" "daily_pipeline_run" {
   name       = "${var.project_name}-${var.environment}-daily-run"
   group_name = "default"
 
+  # Pausado deliberadamente (state = "DISABLED") mientras se espera la
+  # sustentación: evita que el pipeline siga corriendo (y generando costo
+  # de Glue) todos los días sin nadie revisando los resultados. La
+  # infraestructura completa sigue desplegada — una ejecución manual
+  # (`aws stepfunctions start-execution`) sigue funcionando en segundos
+  # para una demo en vivo. Reactivar: cambiar a "ENABLED" y aplicar.
+  state = var.pipeline_schedule_enabled ? "ENABLED" : "DISABLED"
+
   schedule_expression          = var.pipeline_schedule_expression
   schedule_expression_timezone = var.pipeline_schedule_timezone
 
